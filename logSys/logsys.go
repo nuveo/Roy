@@ -4,29 +4,50 @@ import (
 	"fmt"
 	"path/filepath"
 	"runtime"
+	"time"
 )
 
-var debugMode = false
-var colors = true
+type MsgType uint8
 
-func SetDebugMode(v bool) {
-	debugMode = v
-}
+const (
+	Message MsgType = 0
+	Debug   MsgType = 1
+	Error   MsgType = 0x80
+)
 
-func logMsg(msg ...interface{}) (ret string) {
-	_, fn, line, _ := runtime.Caller(2)
-	fn = filepath.Base(fn)
+var DebugMode = false
 
-	ret = fmt.Sprintf("[error] %s:%d ", fn, line)
-	ret += fmt.Sprint(msg...)
+func Println(m MsgType, msg ...interface{}) {
+	if m == Debug && !DebugMode {
+		return
+	}
 
-	return
-}
+	var debugInfo string
+	var color string
+	var prefix string
 
-func Println(msg ...interface{}) {
-	fmt.Println(logMsg(msg...))
-}
+	switch m {
+	case Message:
+		color = "\x1b[37m" // White
+		prefix = "msg"
+	case Debug:
+		color = "\x1b[93m" // Light Yellow
+		prefix = "debug"
+	case Error:
+		color = "\x1b[91m" // Light Red
+		prefix = "error"
+	}
 
-func Print(msg ...interface{}) {
-	fmt.Print(logMsg(msg...))
+	if DebugMode {
+		_, fn, line, _ := runtime.Caller(1)
+		fn = filepath.Base(fn)
+		debugInfo = fmt.Sprintf("%s:%d ", fn, line)
+	}
+
+	fmt.Printf("%s%s [%s] %s%s\033[0;00m\n",
+		color,
+		time.Now().UTC().Format("2006/01/02 15:04:05"),
+		prefix,
+		debugInfo,
+		fmt.Sprint(msg...))
 }
