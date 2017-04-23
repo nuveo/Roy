@@ -1,8 +1,8 @@
 package main
 
-import "github.com/crgimenes/Roy/logSys"
+import l "github.com/crgimenes/logSys"
 
 func main() {
-	logSys.Println("Starting")
+	l.Println(l.Message, "Starting")
 
 }
