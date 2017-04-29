@@ -26,12 +26,32 @@ func statusHandle(w http.ResponseWriter, req *http.Request) {
 func main() {
 	l.Println(l.Message, "Starting")
 
+	/******************************
+	 ** Load configuration
+	 ******************************/
+
 	goConfig.PrefixEnv = "ROY"
 	err := goConfig.Parse(cfg)
 	if err != nil {
 		l.Println(l.Error, err)
 		return
 	}
+
+	/******************************
+	 ** Start queues
+	 ******************************/
+
+	/******************************
+	 ** Start sensor scheduler
+	 ******************************/
+
+	/******************************
+	 ** Start actuator loop
+	 ******************************/
+
+	/******************************
+	 ** Start HTTP server
+	 ******************************/
 
 	http.HandleFunc("/", mainHandle)
 	http.HandleFunc("/status", statusHandle)
