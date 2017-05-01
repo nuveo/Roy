@@ -88,3 +88,39 @@ func TestRenew(t *testing.T) {
 	}
 
 }
+
+func TestRelease(t *testing.T) {
+	q, err := New()
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	b := []byte{'a', 'b', 'c'}
+	q.Put(b)
+	if q.Count() != 1 {
+		t.Fatal("The queue should contain one item")
+	}
+
+	var r []byte
+	var hash string
+	hash, r, err = q.Reserve()
+
+	if len(r) != 3 || r[0] != 'a' || r[1] != 'b' || r[2] != 'c' {
+		t.Fatalf("Corrupted Payload, len:%d, %#v", len(r), r)
+	}
+
+	err = q.Release("fake hash")
+	if err != ERROR_HASH_NOT_FOUND {
+		t.Fatal("Expected error ERROR_HASH_NOT_FOUND, " + err.Error())
+	}
+
+	err = q.Release(hash)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	err = q.Release(hash)
+	if err != ERROR_NOT_RESERVED {
+		t.Fatal("Expected error ERROR_NOT_RESERVED, " + err.Error())
+	}
+}
