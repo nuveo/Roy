@@ -24,18 +24,13 @@ type Item struct {
 type Data struct {
 	Tag      string          `json:"tag"`
 	ItemList map[string]Item `json:"item"`
-	control  queueControl
-}
-
-type queueControl struct {
-	mutex *sync.Mutex
+	sync.Mutex
 }
 
 // New queue
 func New() (q *Data, err error) {
 	q = &Data{
 		ItemList: make(map[string]Item),
-		control:  queueControl{mutex: &sync.Mutex{}},
 	}
 	return
 }
@@ -47,6 +42,8 @@ func (q *Data) Count() int {
 
 // Put data in the queue
 func (q *Data) Put(b []byte) {
+	q.Lock()
+	defer q.Unlock()
 	q.ItemList[randStr()] = Item{Value: b}
 }
 
@@ -54,8 +51,8 @@ func (q *Data) Put(b []byte) {
 // If the item is not removed or the reservation time is not
 // renewed, the item will returns to the queue automatically
 func (q *Data) Reserve(hash string) (item Item, err error) {
-	q.control.mutex.Lock()
-	defer q.control.mutex.Unlock()
+	q.Lock()
+	defer q.Unlock()
 	v, ok := q.ItemList[hash]
 	if !ok {
 		err = ERROR_HASH_NOT_FOUND
@@ -75,14 +72,14 @@ func (q *Data) Reserve(hash string) (item Item, err error) {
 
 // Remove item from the queue, the item must be reserved.
 func (q *Data) Remove(hash string) (err error) {
-	q.control.mutex.Lock()
-	defer q.control.mutex.Unlock()
+	q.Lock()
+	defer q.Unlock()
 	v, ok := q.ItemList[hash]
 	if !ok {
 		err = ERROR_HASH_NOT_FOUND
 		return
 	}
-	diff := time.Now().Sub(v.ReservedAt)
+	diff := time.Since(v.ReservedAt)
 	if diff.Seconds() >= MaxReserTime {
 		err = ERROR_NOT_RESERVED
 		return
@@ -93,8 +90,8 @@ func (q *Data) Remove(hash string) (err error) {
 
 // Renew the reservation of an item in the queue.
 func (q *Data) Renew(hash string) (err error) {
-	q.control.mutex.Lock()
-	defer q.control.mutex.Unlock()
+	q.Lock()
+	defer q.Unlock()
 	v, ok := q.ItemList[hash]
 	if !ok {
 		err = ERROR_HASH_NOT_FOUND
