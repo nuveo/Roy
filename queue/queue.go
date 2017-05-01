@@ -11,6 +11,7 @@ const MaxReserTime = 30
 
 var ERROR_HASH_NOT_FOUND = errors.New("Hash not found")
 var ERROR_ALREADY_RESERVED = errors.New("Item already reserved")
+var ERROR_NOT_RESERVED = errors.New("Item not reserved")
 
 // Item struct is the basic queue item
 type Item struct {
@@ -68,6 +69,25 @@ func (q *Data) Reserve(hash string) (item Item, err error) {
 	}
 	v.ReservedAt = time.Now()
 	item = v
+	return
+}
+
+// Remove item from the queue, the item must be reserved.
+func (q *Data) Remove(hash string) (err error) {
+	q.control.mutex.Lock()
+	defer q.control.mutex.Unlock()
+	v, ok := q.ItemList[hash]
+	if !ok {
+		err = ERROR_HASH_NOT_FOUND
+		return
+	}
+	now := time.Now()
+	diff := now.Sub(v.ReservedAt)
+	if diff.Seconds() >= MaxReserTime {
+		err = ERROR_NOT_RESERVED
+		return
+	}
+	delete(q.ItemList, hash)
 	return
 }
 
