@@ -22,13 +22,14 @@ type Item struct {
 type Data struct {
 	MaxReserTime float64
 	ItemList     map[string]Item `json:"item"`
-	sync.RWMutex
+	mutex        *sync.RWMutex
 }
 
 // New queue
 func New() (q *Data, err error) {
 	q = &Data{
 		MaxReserTime: 30.0,
+		mutex:        &sync.RWMutex{},
 		ItemList:     make(map[string]Item),
 	}
 	return
@@ -41,15 +42,15 @@ func (q *Data) Count() int {
 
 // Put data in the queue
 func (q *Data) Put(b []byte) {
-	q.Lock()
-	defer q.Unlock()
+	q.mutex.Lock()
+	defer q.mutex.Unlock()
 	q.ItemList[randStr()] = Item{Value: b}
 }
 
 // Renew the reservation of an item in the queue
 func (q *Data) Renew(hash string) (err error) {
-	q.Lock()
-	defer q.Unlock()
+	q.mutex.Lock()
+	defer q.mutex.Unlock()
 	v, ok := q.ItemList[hash]
 	if !ok {
 		err = ERROR_HASH_NOT_FOUND
@@ -70,8 +71,8 @@ func (q *Data) Renew(hash string) (err error) {
 // If the item is not removed or the reservation time is not
 // renewed, the item will returns to the queue automatically
 func (q *Data) Reserve() (hash string, value []byte, err error) {
-	q.Lock()
-	defer q.Unlock()
+	q.mutex.Lock()
+	defer q.mutex.Unlock()
 	for k, v := range q.ItemList {
 		now := time.Now()
 		diff := now.Sub(v.ReservedAt)
@@ -89,8 +90,8 @@ func (q *Data) Reserve() (hash string, value []byte, err error) {
 
 // Remove item from the queue, the item must be reserved
 func (q *Data) Remove(hash string) (err error) {
-	q.Lock()
-	defer q.Unlock()
+	q.mutex.Lock()
+	defer q.mutex.Unlock()
 	v, ok := q.ItemList[hash]
 	if !ok {
 		err = ERROR_HASH_NOT_FOUND
