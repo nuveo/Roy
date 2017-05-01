@@ -24,7 +24,7 @@ type Item struct {
 type Data struct {
 	Tag      string          `json:"tag"`
 	ItemList map[string]Item `json:"item"`
-	sync.Mutex
+	sync.RWMutex
 }
 
 // New queue
@@ -105,6 +105,17 @@ func (q *Data) Renew(hash string) (err error) {
 	}
 	v.ReservedAt = now
 	q.ItemList[hash] = v
+	return
+}
+
+// List all items in the queue
+func (q *Data) List() (hashList []string) {
+	q.RLock()
+	defer q.RUnlock()
+	for k := range q.ItemList {
+		hashList = append(hashList, k)
+	}
+
 	return
 }
 
