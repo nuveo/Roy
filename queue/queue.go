@@ -37,6 +37,8 @@ func New() (q *Data, err error) {
 
 // Count items in the queue
 func (q *Data) Count() int {
+	q.mutex.RLock()
+	defer q.mutex.RUnlock()
 	return len(q.ItemList)
 }
 
