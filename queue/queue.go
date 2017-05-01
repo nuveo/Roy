@@ -2,13 +2,21 @@ package queue
 
 import (
 	"crypto/rand"
+	"errors"
 	"sync"
+	"time"
 )
+
+const MaxReserTime = 30
+
+var ERROR_HASH_NOT_FOUND = errors.New("Hash not found")
+var ERROR_ALREADY_RESERVED = errors.New("Item already reserved")
 
 // Item struct is the basic queue item
 type Item struct {
-	Tag   string `json:"tag"`
-	Value []byte `json:"value"`
+	ReservedAt time.Time `json:"reserved_at"`
+	Tag        string    `json:"tag"`
+	Value      []byte    `json:"value"`
 }
 
 // Data contains all data in the current queue
@@ -39,6 +47,28 @@ func (q *Data) Count() int {
 // Put data in the queue
 func (q *Data) Put(b []byte) {
 	q.ItemList[randStr()] = Item{Value: b}
+}
+
+// Reserve an item to be processed.
+// If the item is not removed or the reservation time is not
+// renewed, the item will returns to the queue automatically
+func (q *Data) Reserve(hash string) (item Item, err error) {
+	q.control.mutex.Lock()
+	defer q.control.mutex.Unlock()
+	v, ok := q.ItemList[hash]
+	if !ok {
+		err = ERROR_HASH_NOT_FOUND
+		return
+	}
+	now := time.Now()
+	diff := now.Sub(v.ReservedAt)
+	if diff.Seconds() < MaxReserTime {
+		err = ERROR_ALREADY_RESERVED
+		return
+	}
+	v.ReservedAt = time.Now()
+	item = v
+	return
 }
 
 func randStr() (ret string) {
