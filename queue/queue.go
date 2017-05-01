@@ -67,13 +67,32 @@ func (q *Data) Reserve(hash string) (item Item, err error) {
 		err = ERROR_ALREADY_RESERVED
 		return
 	}
-	v.ReservedAt = time.Now()
+	v.ReservedAt = now
 	item = v
+	q.ItemList[hash] = v
 	return
 }
 
 // Remove item from the queue, the item must be reserved.
 func (q *Data) Remove(hash string) (err error) {
+	q.control.mutex.Lock()
+	defer q.control.mutex.Unlock()
+	v, ok := q.ItemList[hash]
+	if !ok {
+		err = ERROR_HASH_NOT_FOUND
+		return
+	}
+	diff := time.Now().Sub(v.ReservedAt)
+	if diff.Seconds() >= MaxReserTime {
+		err = ERROR_NOT_RESERVED
+		return
+	}
+	delete(q.ItemList, hash)
+	return
+}
+
+// Renew the reservation of an item in the queue.
+func (q *Data) Renew(hash string) (err error) {
 	q.control.mutex.Lock()
 	defer q.control.mutex.Unlock()
 	v, ok := q.ItemList[hash]
@@ -87,7 +106,8 @@ func (q *Data) Remove(hash string) (err error) {
 		err = ERROR_NOT_RESERVED
 		return
 	}
-	delete(q.ItemList, hash)
+	v.ReservedAt = now
+	q.ItemList[hash] = v
 	return
 }
 
