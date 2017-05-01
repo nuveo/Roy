@@ -17,13 +17,11 @@ var ERROR_NO_ITEMS_AVALIABLE = errors.New("No items available")
 // Item struct is the basic queue item
 type Item struct {
 	ReservedAt time.Time `json:"reserved_at"`
-	Tag        string    `json:"tag"`
 	Value      []byte    `json:"value"`
 }
 
 // Data contains all data in the current queue
 type Data struct {
-	Tag      string          `json:"tag"`
 	ItemList map[string]Item `json:"item"`
 	sync.RWMutex
 }
