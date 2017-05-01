@@ -7,8 +7,6 @@ import (
 	"time"
 )
 
-const MaxReserTime = 30
-
 var ERROR_HASH_NOT_FOUND = errors.New("Hash not found")
 var ERROR_ALREADY_RESERVED = errors.New("Item already reserved")
 var ERROR_NOT_RESERVED = errors.New("Item not reserved")
@@ -22,14 +20,16 @@ type Item struct {
 
 // Data contains all data in the current queue
 type Data struct {
-	ItemList map[string]Item `json:"item"`
+	MaxReserTime float64
+	ItemList     map[string]Item `json:"item"`
 	sync.RWMutex
 }
 
 // New queue
 func New() (q *Data, err error) {
 	q = &Data{
-		ItemList: make(map[string]Item),
+		MaxReserTime: 30.0,
+		ItemList:     make(map[string]Item),
 	}
 	return
 }
@@ -46,10 +46,8 @@ func (q *Data) Put(b []byte) {
 	q.ItemList[randStr()] = Item{Value: b}
 }
 
-// Reserve an item to be processed.
-// If the item is not removed or the reservation time is not
-// renewed, the item will returns to the queue automatically
-func (q *Data) Reserve(hash string) (item Item, err error) {
+// Renew the reservation of an item in the queue
+func (q *Data) Renew(hash string) (err error) {
 	q.Lock()
 	defer q.Unlock()
 	v, ok := q.ItemList[hash]
@@ -59,13 +57,33 @@ func (q *Data) Reserve(hash string) (item Item, err error) {
 	}
 	now := time.Now()
 	diff := now.Sub(v.ReservedAt)
-	if diff.Seconds() < MaxReserTime {
-		err = ERROR_ALREADY_RESERVED
+	if diff.Seconds() >= q.MaxReserTime {
+		err = ERROR_NOT_RESERVED
 		return
 	}
 	v.ReservedAt = now
-	item = v
 	q.ItemList[hash] = v
+	return
+}
+
+// Reserve searches for the next available item in the queue
+// If the item is not removed or the reservation time is not
+// renewed, the item will returns to the queue automatically
+func (q *Data) Reserve() (hash string, value []byte, err error) {
+	q.Lock()
+	defer q.Unlock()
+	for k, v := range q.ItemList {
+		now := time.Now()
+		diff := now.Sub(v.ReservedAt)
+		if diff.Seconds() > q.MaxReserTime {
+			v.ReservedAt = now
+			q.ItemList[k] = v
+			value = v.Value
+			hash = k
+			return
+		}
+	}
+	err = ERROR_NO_ITEMS_AVALIABLE
 	return
 }
 
@@ -79,61 +97,11 @@ func (q *Data) Remove(hash string) (err error) {
 		return
 	}
 	diff := time.Since(v.ReservedAt)
-	if diff.Seconds() >= MaxReserTime {
+	if diff.Seconds() >= q.MaxReserTime {
 		err = ERROR_NOT_RESERVED
 		return
 	}
 	delete(q.ItemList, hash)
-	return
-}
-
-// Renew the reservation of an item in the queue
-func (q *Data) Renew(hash string) (err error) {
-	q.Lock()
-	defer q.Unlock()
-	v, ok := q.ItemList[hash]
-	if !ok {
-		err = ERROR_HASH_NOT_FOUND
-		return
-	}
-	now := time.Now()
-	diff := now.Sub(v.ReservedAt)
-	if diff.Seconds() >= MaxReserTime {
-		err = ERROR_NOT_RESERVED
-		return
-	}
-	v.ReservedAt = now
-	q.ItemList[hash] = v
-	return
-}
-
-// ReserveNext searches for the next available item in the queue
-func (q *Data) ReserveNext() (hash string, value []byte, err error) {
-	q.Lock()
-	defer q.Unlock()
-	for k, v := range q.ItemList {
-		now := time.Now()
-		diff := now.Sub(v.ReservedAt)
-		if diff.Seconds() > MaxReserTime {
-			v.ReservedAt = now
-			q.ItemList[k] = v
-			value = v.Value
-			hash = k
-			return
-		}
-	}
-	err = ERROR_NO_ITEMS_AVALIABLE
-	return
-}
-
-// List all items in the queue
-func (q *Data) List() (hashList []string) {
-	q.RLock()
-	defer q.RUnlock()
-	for k := range q.ItemList {
-		hashList = append(hashList, k)
-	}
-
 	return
 }
 
