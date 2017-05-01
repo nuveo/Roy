@@ -108,6 +108,27 @@ func (q *Data) Remove(hash string) (err error) {
 	return
 }
 
+// Release reserved item
+func (q *Data) Release(hash string) (err error) {
+	q.mutex.Lock()
+	defer q.mutex.Unlock()
+	v, ok := q.ItemList[hash]
+	if !ok {
+		err = ERROR_HASH_NOT_FOUND
+		return
+	}
+	diff := time.Since(v.ReservedAt)
+	if diff.Seconds() >= q.MaxReserTime {
+		err = ERROR_NOT_RESERVED
+		return
+	}
+
+	v.ReservedAt = time.Time{}
+	q.ItemList[hash] = v
+
+	return
+}
+
 func randStr() (ret string) {
 	const charList = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
 	const clLen byte = 62
