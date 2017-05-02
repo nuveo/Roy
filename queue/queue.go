@@ -14,23 +14,23 @@ var ERROR_NO_ITEMS_AVALIABLE = errors.New("No items available")
 
 // Item struct is the basic queue item
 type Item struct {
-	ReservedAt time.Time `json:"reserved_at"`
-	Value      []byte    `json:"value"`
+	ReservedAt time.Time   `json:"reserved_at"`
+	Value      interface{} `json:"value"`
 }
 
 // Data contains all data in the current queue
 type Data struct {
-	MaxReserveTime float64 `json:"max_reserve_time"`
-	ItemList     map[string]Item `json:"item"`
-	mutex        *sync.RWMutex
+	MaxReserveTime float64         `json:"max_reserve_time"`
+	ItemList       map[string]Item `json:"item"`
+	mutex          *sync.RWMutex
 }
 
 // New queue
 func New() (q *Data, err error) {
 	q = &Data{
 		MaxReserveTime: 30.0,
-		mutex:        &sync.RWMutex{},
-		ItemList:     make(map[string]Item),
+		mutex:          &sync.RWMutex{},
+		ItemList:       make(map[string]Item),
 	}
 	return
 }
@@ -43,10 +43,10 @@ func (q *Data) Count() int {
 }
 
 // Put data in the queue
-func (q *Data) Put(b []byte) {
+func (q *Data) Put(v interface{}) {
 	q.mutex.Lock()
 	defer q.mutex.Unlock()
-	q.ItemList[randStr()] = Item{Value: b}
+	q.ItemList[randStr()] = Item{Value: v}
 }
 
 // Renew the reservation of an item in the queue
@@ -72,7 +72,7 @@ func (q *Data) Renew(hash string) (err error) {
 // Reserve searches for the next available item in the queue
 // If the item is not removed or the reservation time is not
 // renewed, the item will returns to the queue automatically
-func (q *Data) Reserve() (hash string, value []byte, err error) {
+func (q *Data) Reserve() (hash string, value interface{}, err error) {
 	q.mutex.Lock()
 	defer q.mutex.Unlock()
 	for k, v := range q.ItemList {

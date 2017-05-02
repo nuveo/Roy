@@ -17,7 +17,7 @@ func TestQueue(t *testing.T) {
 	}
 
 	for i := 0; i < 4; i++ {
-		var r []byte
+		var r interface{}
 		var hash string
 		hash, r, err = q.Reserve()
 		if err == ERROR_NO_ITEMS_AVALIABLE && i == 3 {
@@ -28,8 +28,10 @@ func TestQueue(t *testing.T) {
 			t.Fatal(err.Error())
 		}
 
-		if len(r) != 3 || r[0] != 'a' || r[1] != 'b' || r[2] != 'c' {
-			t.Fatalf("Corrupted Payload, len:%d, %#v", len(r), r)
+		x := r.([]byte)
+
+		if len(x) != 3 || x[0] != 'a' || x[1] != 'b' || x[2] != 'c' {
+			t.Fatalf("Corrupted Payload, len:%d, %#v", len(x), x)
 		}
 
 		err = q.Remove(hash)
@@ -57,12 +59,14 @@ func TestRenew(t *testing.T) {
 		t.Fatal("The queue should contain one item")
 	}
 
-	var r []byte
+	var r interface{}
 	var hash string
 	hash, r, err = q.Reserve()
 
-	if len(r) != 3 || r[0] != 'a' || r[1] != 'b' || r[2] != 'c' {
-		t.Fatalf("Corrupted Payload, len:%d, %#v", len(r), r)
+	x := r.([]byte)
+
+	if len(x) != 3 || x[0] != 'a' || x[1] != 'b' || x[2] != 'c' {
+		t.Fatalf("Corrupted Payload, len:%d, %#v", len(x), x)
 	}
 
 	err = q.Renew(hash)
@@ -101,12 +105,14 @@ func TestRelease(t *testing.T) {
 		t.Fatal("The queue should contain one item")
 	}
 
-	var r []byte
+	var r interface{}
 	var hash string
 	hash, r, err = q.Reserve()
 
-	if len(r) != 3 || r[0] != 'a' || r[1] != 'b' || r[2] != 'c' {
-		t.Fatalf("Corrupted Payload, len:%d, %#v", len(r), r)
+	x := r.([]byte)
+
+	if len(x) != 3 || x[0] != 'a' || x[1] != 'b' || x[2] != 'c' {
+		t.Fatalf("Corrupted Payload, len:%d, %#v", len(x), x)
 	}
 
 	err = q.Release("fake hash")
