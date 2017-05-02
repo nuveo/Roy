@@ -13,7 +13,7 @@ The safest way to use the queue system is to persist the data in a database usin
 
 Places an item in the queue.
 
-###Example
+#### Example
 
 ```go
 q, err := New()
@@ -26,7 +26,31 @@ b := []byte{'a', 'b', 'c'}
 q.Put(b)
 ```
 
-reserve
+### Reserve
+
+Reserve picks up an item from the queue and makes it available for processing. The system has 30 seconds or the time in MaxReserveTime to process the item, this time can be extended using the Renew function. If the item is not deleted or released until the time runs out the system automatically returns the item to the list.
+
+#### Example
+
+```go
+q, err := New()
+if err != nil {
+	fmt.Println(err.Error())
+    return
+}
+
+b := []byte{'a', 'b', 'c'}
+q.Put(b)
+
+var r interface{}
+_, r, err = q.Reserve()
+
+x := r.([]byte)
+
+fmt.Println(string(x))
+```
+
+
 
 delete
 
