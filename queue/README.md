@@ -50,12 +50,42 @@ x := r.([]byte)
 fmt.Println(string(x))
 ```
 
+### Renew
 
+The Renew function reset the timer of the reserved item so that the system has more time to process the data. In long processes call Renew periodically.
 
-delete
+#### Example
 
-list
+```go
 
-count 
+```
 
-size
+### Release
+
+The Release function frees the reserved item by returning it to the queue and leaving it available to by used by another process. Must be used when the current instance can not process the reserved item.
+
+#### Example
+
+```go
+
+```
+
+### Remove
+
+The Remove function is used to remove the reserved item from the list. Must be used when the current instance was able to process the data and it can be removed.
+
+#### Example
+
+```go
+
+```
+
+### Count 
+
+The Count function is used to know how many items still exist in the list.
+
+#### Example
+
+```go
+
+```
