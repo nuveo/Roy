@@ -20,7 +20,7 @@ type Item struct {
 
 // Data contains all data in the current queue
 type Data struct {
-	MaxReserTime float64
+	MaxReserveTime float64 `json:"max_reserve_time"`
 	ItemList     map[string]Item `json:"item"`
 	mutex        *sync.RWMutex
 }
@@ -28,7 +28,7 @@ type Data struct {
 // New queue
 func New() (q *Data, err error) {
 	q = &Data{
-		MaxReserTime: 30.0,
+		MaxReserveTime: 30.0,
 		mutex:        &sync.RWMutex{},
 		ItemList:     make(map[string]Item),
 	}
@@ -60,7 +60,7 @@ func (q *Data) Renew(hash string) (err error) {
 	}
 	now := time.Now()
 	diff := now.Sub(v.ReservedAt)
-	if diff.Seconds() >= q.MaxReserTime {
+	if diff.Seconds() >= q.MaxReserveTime {
 		err = ERROR_NOT_RESERVED
 		return
 	}
@@ -78,7 +78,7 @@ func (q *Data) Reserve() (hash string, value []byte, err error) {
 	for k, v := range q.ItemList {
 		now := time.Now()
 		diff := now.Sub(v.ReservedAt)
-		if diff.Seconds() > q.MaxReserTime {
+		if diff.Seconds() > q.MaxReserveTime {
 			v.ReservedAt = now
 			q.ItemList[k] = v
 			value = v.Value
@@ -100,7 +100,7 @@ func (q *Data) Remove(hash string) (err error) {
 		return
 	}
 	diff := time.Since(v.ReservedAt)
-	if diff.Seconds() >= q.MaxReserTime {
+	if diff.Seconds() >= q.MaxReserveTime {
 		err = ERROR_NOT_RESERVED
 		return
 	}
@@ -118,7 +118,7 @@ func (q *Data) Release(hash string) (err error) {
 		return
 	}
 	diff := time.Since(v.ReservedAt)
-	if diff.Seconds() >= q.MaxReserTime {
+	if diff.Seconds() >= q.MaxReserveTime {
 		err = ERROR_NOT_RESERVED
 		return
 	}

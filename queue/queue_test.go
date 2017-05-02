@@ -70,7 +70,7 @@ func TestRenew(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 
-	q.MaxReserTime = 0
+	q.MaxReserveTime = 0
 
 	err = q.Renew(hash)
 	if err != ERROR_NOT_RESERVED {
