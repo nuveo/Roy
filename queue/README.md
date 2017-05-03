@@ -57,7 +57,34 @@ The Renew function reset the timer of the reserved item so that the system has m
 #### Example
 
 ```go
+q, err := New()
+if err != nil {
+    fmt.Println(err.Error())
+    return
+}
 
+b := []byte{'a', 'b', 'c'}
+q.Put(b)
+if q.Count() != 1 {
+    fmt.Println(err.Error())
+    return
+}
+
+var r interface{}
+var hash string
+hash, r, err = q.Reserve()
+if err != nil {
+    fmt.Println(err.Error())
+    return
+}
+
+...
+	
+err = q.Renew(hash)
+	if err != nil {
+	    fmt.Println(err.Error())
+        return
+	}
 ```
 
 ### Release
