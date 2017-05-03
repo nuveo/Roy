@@ -65,10 +65,6 @@ if err != nil {
 
 b := []byte{'a', 'b', 'c'}
 q.Put(b)
-if q.Count() != 1 {
-    fmt.Println(err.Error())
-    return
-}
 
 var r interface{}
 var hash string
@@ -81,10 +77,10 @@ if err != nil {
 ...
 	
 err = q.Renew(hash)
-	if err != nil {
-	    fmt.Println(err.Error())
-        return
-	}
+if err != nil {
+    fmt.Println(err.Error())
+    return
+}
 ```
 
 ### Release
@@ -102,10 +98,6 @@ if err != nil {
 
 b := []byte{'a', 'b', 'c'}
 q.Put(b)
-if q.Count() != 1 {
-    fmt.Println(err.Error())
-    return
-}
 
 var r interface{}
 var hash string
@@ -131,7 +123,30 @@ The Remove function is used to remove the reserved item from the list. Must be u
 #### Example
 
 ```go
+q, err := New()
+if err != nil {
+    fmt.Println(err.Error())
+    return
+}
 
+b := []byte{'a', 'b', 'c'}
+q.Put(b)
+
+var r interface{}
+var hash string
+hash, r, err = q.Reserve()
+if err != nil {
+    fmt.Println(err.Error())
+    return
+}
+
+...
+	
+err = q.Remove(hash)
+if err != nil {
+    fmt.Println(err.Error())
+    return
+}
 ```
 
 ### Count 
@@ -141,5 +156,14 @@ The Count function is used to know how many items still exist in the list.
 #### Example
 
 ```go
+q, err := New()
+if err != nil {
+    fmt.Println(err.Error())
+    return
+}
 
+b := []byte{'a', 'b', 'c'}
+q.Put(b)
+
+fmt.Printf("Count: %d",q.Count())
 ```
