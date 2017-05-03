@@ -20,7 +20,7 @@ func TestQueue(t *testing.T) {
 		var r interface{}
 		var hash string
 		hash, r, err = q.Reserve()
-		if err == ERROR_NO_ITEMS_AVALIABLE && i == 3 {
+		if err == ErrorNoItemsAvailable && i == 3 {
 			break
 		}
 
@@ -41,8 +41,8 @@ func TestQueue(t *testing.T) {
 	}
 
 	err = q.Remove("fake hash")
-	if err != ERROR_HASH_NOT_FOUND {
-		t.Fatal("Expected error ERROR_HASH_NOT_FOUND, " + err.Error())
+	if err != ErrorHashNotFound {
+		t.Fatal("Expected error ErrorHashNotFound, " + err.Error())
 	}
 
 }
@@ -77,18 +77,18 @@ func TestRenew(t *testing.T) {
 	q.MaxReserveTime = 0
 
 	err = q.Renew(hash)
-	if err != ERROR_NOT_RESERVED {
-		t.Fatal("Expected error ERROR_NOT_RESERVED, " + err.Error())
+	if err != ErrorItemNotReserved {
+		t.Fatal("Expected error ErrorItemNotReserved, " + err.Error())
 	}
 
 	err = q.Remove(hash)
-	if err != ERROR_NOT_RESERVED {
-		t.Fatal("Expected error ERROR_NOT_RESERVED, " + err.Error())
+	if err != ErrorItemNotReserved {
+		t.Fatal("Expected error ErrorItemNotReserved, " + err.Error())
 	}
 
 	err = q.Renew("fake hash")
-	if err != ERROR_HASH_NOT_FOUND {
-		t.Fatal("Expected error ERROR_HASH_NOT_FOUND, " + err.Error())
+	if err != ErrorHashNotFound {
+		t.Fatal("Expected error ErrorHashNotFound, " + err.Error())
 	}
 
 }
@@ -116,8 +116,8 @@ func TestRelease(t *testing.T) {
 	}
 
 	err = q.Release("fake hash")
-	if err != ERROR_HASH_NOT_FOUND {
-		t.Fatal("Expected error ERROR_HASH_NOT_FOUND, " + err.Error())
+	if err != ErrorHashNotFound {
+		t.Fatal("Expected error ErrorHashNotFound, " + err.Error())
 	}
 
 	err = q.Release(hash)
@@ -126,7 +126,7 @@ func TestRelease(t *testing.T) {
 	}
 
 	err = q.Release(hash)
-	if err != ERROR_NOT_RESERVED {
-		t.Fatal("Expected error ERROR_NOT_RESERVED, " + err.Error())
+	if err != ErrorItemNotReserved {
+		t.Fatal("Expected error ErrorItemNotReserved, " + err.Error())
 	}
 }

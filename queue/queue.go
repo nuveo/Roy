@@ -7,10 +7,9 @@ import (
 	"time"
 )
 
-var ERROR_HASH_NOT_FOUND = errors.New("Hash not found")
-var ERROR_ALREADY_RESERVED = errors.New("Item already reserved")
-var ERROR_NOT_RESERVED = errors.New("Item not reserved")
-var ERROR_NO_ITEMS_AVALIABLE = errors.New("No items available")
+var ErrorHashNotFound = errors.New("Hash not found")
+var ErrorItemNotReserved = errors.New("Item not reserved")
+var ErrorNoItemsAvailable = errors.New("No items available")
 
 // Item struct is the basic queue item
 type Item struct {
@@ -68,7 +67,7 @@ func (q *Data) Reserve() (hash string, value interface{}, err error) {
 		}
 	}
 
-	err = ERROR_NO_ITEMS_AVALIABLE
+	err = ErrorNoItemsAvailable
 	return
 }
 
@@ -122,12 +121,12 @@ func (q *Data) Release(hash string) (err error) {
 func (q *Data) getIten(hash string) (item Item, err error) {
 	v, ok := q.ItemList[hash]
 	if !ok {
-		err = ERROR_HASH_NOT_FOUND
+		err = ErrorHashNotFound
 		return
 	}
 	diff := time.Since(v.ReservedAt)
 	if diff.Seconds() >= q.MaxReserveTime {
-		err = ERROR_NOT_RESERVED
+		err = ErrorItemNotReserved
 		return
 	}
 	item = v
