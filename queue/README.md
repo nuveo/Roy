@@ -94,7 +94,34 @@ The Release function frees the reserved item by returning it to the queue and le
 #### Example
 
 ```go
+q, err := New()
+if err != nil {
+    fmt.Println(err.Error())
+    return
+}
 
+b := []byte{'a', 'b', 'c'}
+q.Put(b)
+if q.Count() != 1 {
+    fmt.Println(err.Error())
+    return
+}
+
+var r interface{}
+var hash string
+hash, r, err = q.Reserve()
+if err != nil {
+    fmt.Println(err.Error())
+    return
+}
+
+...
+	
+err = q.Release(hash)
+if err != nil {
+    fmt.Println(err.Error())
+    return
+}
 ```
 
 ### Remove
