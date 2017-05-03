@@ -49,6 +49,29 @@ func (q *Data) Put(v interface{}) {
 	q.ItemList[randStr()] = Item{Value: v}
 }
 
+// Reserve searches for the next available item in the queue
+// If the item is not removed or the reservation time is not
+// renewed, the item will returns to the queue automatically
+func (q *Data) Reserve() (hash string, value interface{}, err error) {
+	q.mutex.Lock()
+	defer q.mutex.Unlock()
+
+	for k, v := range q.ItemList {
+		now := time.Now()
+		diff := now.Sub(v.ReservedAt)
+		if diff.Seconds() > q.MaxReserveTime {
+			v.ReservedAt = now
+			q.ItemList[k] = v
+			value = v.Value
+			hash = k
+			return
+		}
+	}
+
+	err = ERROR_NO_ITEMS_AVALIABLE
+	return
+}
+
 // Renew the reservation of an item in the queue
 func (q *Data) Renew(hash string) (err error) {
 	q.mutex.Lock()
@@ -62,27 +85,6 @@ func (q *Data) Renew(hash string) (err error) {
 
 	item.ReservedAt = time.Now()
 	q.ItemList[hash] = item
-	return
-}
-
-// Reserve searches for the next available item in the queue
-// If the item is not removed or the reservation time is not
-// renewed, the item will returns to the queue automatically
-func (q *Data) Reserve() (hash string, value interface{}, err error) {
-	q.mutex.Lock()
-	defer q.mutex.Unlock()
-	for k, v := range q.ItemList {
-		now := time.Now()
-		diff := now.Sub(v.ReservedAt)
-		if diff.Seconds() > q.MaxReserveTime {
-			v.ReservedAt = now
-			q.ItemList[k] = v
-			value = v.Value
-			hash = k
-			return
-		}
-	}
-	err = ERROR_NO_ITEMS_AVALIABLE
 	return
 }
 
