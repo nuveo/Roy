@@ -53,19 +53,15 @@ func (q *Data) Put(v interface{}) {
 func (q *Data) Renew(hash string) (err error) {
 	q.mutex.Lock()
 	defer q.mutex.Unlock()
-	v, ok := q.ItemList[hash]
-	if !ok {
-		err = ERROR_HASH_NOT_FOUND
+
+	var item Item
+	item, err = q.getIten(hash)
+	if err != nil {
 		return
 	}
-	now := time.Now()
-	diff := now.Sub(v.ReservedAt)
-	if diff.Seconds() >= q.MaxReserveTime {
-		err = ERROR_NOT_RESERVED
-		return
-	}
-	v.ReservedAt = now
-	q.ItemList[hash] = v
+
+	item.ReservedAt = time.Now()
+	q.ItemList[hash] = item
 	return
 }
 
@@ -94,16 +90,12 @@ func (q *Data) Reserve() (hash string, value interface{}, err error) {
 func (q *Data) Remove(hash string) (err error) {
 	q.mutex.Lock()
 	defer q.mutex.Unlock()
-	v, ok := q.ItemList[hash]
-	if !ok {
-		err = ERROR_HASH_NOT_FOUND
+
+	_, err = q.getIten(hash)
+	if err != nil {
 		return
 	}
-	diff := time.Since(v.ReservedAt)
-	if diff.Seconds() >= q.MaxReserveTime {
-		err = ERROR_NOT_RESERVED
-		return
-	}
+
 	delete(q.ItemList, hash)
 	return
 }
@@ -112,6 +104,20 @@ func (q *Data) Remove(hash string) (err error) {
 func (q *Data) Release(hash string) (err error) {
 	q.mutex.Lock()
 	defer q.mutex.Unlock()
+
+	var item Item
+	item, err = q.getIten(hash)
+	if err != nil {
+		return
+	}
+
+	item.ReservedAt = time.Time{}
+	q.ItemList[hash] = item
+
+	return
+}
+
+func (q *Data) getIten(hash string) (item Item, err error) {
 	v, ok := q.ItemList[hash]
 	if !ok {
 		err = ERROR_HASH_NOT_FOUND
@@ -122,10 +128,7 @@ func (q *Data) Release(hash string) (err error) {
 		err = ERROR_NOT_RESERVED
 		return
 	}
-
-	v.ReservedAt = time.Time{}
-	q.ItemList[hash] = v
-
+	item = v
 	return
 }
 
