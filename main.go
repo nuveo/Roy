@@ -1,10 +1,13 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
+	"os/exec"
 	"time"
 
 	"github.com/crgimenes/goConfig"
@@ -58,7 +61,26 @@ func main() {
 	go func() { // fake sensor
 		for {
 			time.Sleep(time.Second)
-			d := Data{Payload: "test", TimeEntry: time.Now()}
+
+			// run sensor
+
+			cmd := exec.Command("./sensors/fake/fake")
+			var outb, errb bytes.Buffer
+			cmd.Stdout = &outb
+			cmd.Stderr = &errb
+			err := cmd.Run()
+			if err != nil {
+				log.Fatal(err)
+			}
+			fmt.Println("out:", outb.String(), "err:", errb.String())
+
+			// convert stdout from sensor to send to dispatcher
+			var d Data
+			err = json.Unmarshal(outb.Bytes(), &d)
+			if err != nil {
+				log.Fatal(err)
+			}
+
 			c <- d
 		}
 	}()
@@ -69,9 +91,8 @@ func main() {
 
 	go func() {
 		for {
-			time.Sleep(time.Second)
 			d := <-c
-			fmt.Println(d.Payload, d.TimeEntry)
+			fmt.Println(">", d.Payload, d.TimeEntry)
 		}
 	}()
 
