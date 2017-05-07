@@ -1,9 +1,11 @@
 package main
 
 import (
+	"fmt"
 	"io"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/crgimenes/goConfig"
 	l "github.com/crgimenes/logSys"
@@ -11,6 +13,12 @@ import (
 
 type Config struct {
 	Server string `json:"server" cfg:"server" cfgDefault:"localhost:8080"`
+}
+
+type Data struct {
+	Origin    string
+	Payload   string
+	TimeEntry time.Time
 }
 
 var cfg = &Config{}
@@ -25,6 +33,8 @@ func statusHandle(w http.ResponseWriter, req *http.Request) {
 
 func main() {
 	l.Println(l.Message, "Starting")
+
+	c := make(chan Data)
 
 	/******************************
 	 ** Load configuration
@@ -45,9 +55,25 @@ func main() {
 	 ** Start sensor scheduler
 	 ******************************/
 
+	go func() { // fake sensor
+		for {
+			time.Sleep(time.Second)
+			d := Data{Payload: "test", TimeEntry: time.Now()}
+			c <- d
+		}
+	}()
+
 	/******************************
 	 ** Start actuator dispatcher
 	 ******************************/
+
+	go func() {
+		for {
+			time.Sleep(time.Second)
+			d := <-c
+			fmt.Println(d.Payload, d.TimeEntry)
+		}
+	}()
 
 	/******************************
 	 ** Start HTTP server
