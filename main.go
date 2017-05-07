@@ -65,19 +65,19 @@ func main() {
 			// run sensor
 
 			cmd := exec.Command("./sensors/fake/fake")
-			var outb, errb bytes.Buffer
-			cmd.Stdout = &outb
-			cmd.Stderr = &errb
+			var stdout, stderr bytes.Buffer
+			cmd.Stdout = &stdout
+			cmd.Stderr = &stderr
 			err := cmd.Run()
 			if err != nil {
-				l.Println(l.Error, err)
+				l.Println(l.Error, err, stderr.String())
 				continue
 			}
-			l.Println(l.Debug, "out:", outb.String(), "err:", errb.String())
+			l.Println(l.Debug, "out:", stdout.String(), "err:", stderr.String())
 
 			// convert stdout from sensor to send to dispatcher
 			var d Data
-			err = json.Unmarshal(outb.Bytes(), &d)
+			err = json.Unmarshal(stdout.Bytes(), &d)
 			if err != nil {
 				l.Println(l.Error, err)
 				continue
