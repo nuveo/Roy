@@ -70,15 +70,17 @@ func main() {
 			cmd.Stderr = &errb
 			err := cmd.Run()
 			if err != nil {
-				log.Fatal(err)
+				l.Println(l.Error, err)
+				continue
 			}
-			fmt.Println("out:", outb.String(), "err:", errb.String())
+			l.Println(l.Debug, "out:", outb.String(), "err:", errb.String())
 
 			// convert stdout from sensor to send to dispatcher
 			var d Data
 			err = json.Unmarshal(outb.Bytes(), &d)
 			if err != nil {
-				log.Fatal(err)
+				l.Println(l.Error, err)
+				continue
 			}
 
 			c <- d
@@ -92,7 +94,7 @@ func main() {
 	go func() {
 		for {
 			d := <-c
-			fmt.Println(">", d.Payload, d.TimeEntry)
+			fmt.Println(">", d.Origin, d.Payload, d.TimeEntry)
 		}
 	}()
 
