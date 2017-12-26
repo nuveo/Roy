@@ -10,8 +10,8 @@ import (
 	"os/exec"
 	"time"
 
-	"github.com/crgimenes/goConfig"
-	l "github.com/crgimenes/logSys"
+	"github.com/crgimenes/goconfig"
+	l "github.com/crgimenes/log"
 )
 
 type Config struct {
@@ -43,8 +43,8 @@ func main() {
 	 ** Load configuration
 	 ******************************/
 
-	goConfig.PrefixEnv = "ROY"
-	err := goConfig.Parse(cfg)
+	goconfig.PrefixEnv = "ROY"
+	err := goconfig.Parse(cfg)
 	if err != nil {
 		l.Println(l.Error, err)
 		return
